@@ -4,11 +4,11 @@ import matplotlib.pyplot as plt
 
 def H_simple(kx, ky, kz):
     """Hamiltonian of a two band mdoel VB-VB"""
-    h35 = 13.4106 *(kx - 1j* ky) *kz
-    h53 = np.conjugate(h35)
+    h01 = 13.4106 *(kx - 1j* ky) *kz
+    h10 = np.conjugate(h01)
     H_matrix = np.array([
-        [   -18.3007*(kx**2 + ky**2) - 7.22796*kz**2, h35],
-        [h53,    -0.3622 - 7.88749 * (kx**2 + ky**2) - 16.5208 * kz**2]
+        [   -18.3007*(kx**2 + ky**2) - 7.22796*kz**2, h01],
+        [h10,    -0.3622 - 7.88749 * (kx**2 + ky**2) - 16.5208 * kz**2]
     ])
         
     
@@ -29,7 +29,7 @@ E1 = np.zeros_like(KY)
 E2 = np.zeros_like(KY)
 
 
-# Diagonalization loop
+# Diagonalisation loop
 for i in range(KY.shape[0]):
     for j in range(KY.shape[1]):
         ky = KY[i, j]
@@ -110,11 +110,11 @@ def kz2(n,np_,L):
 
 def H_k_only(kx, ky, kz, kykz, ky2, kz2):
     """hamiltonian as a function of new variables <m,n||m'n'>"""
-    h35 = 13.4106 *(kx*kz - 1j* kykz) 
-    h53 = np.conjugate(h35)
+    h01 = 13.4106 *(kx*kz - 1j* kykz) 
+    h10 = np.conjugate(h01)
     return np.array([
-        [   -18.3007*(kx**2 + ky2) - 7.22796*kz2, h35],
-        [h53,     - 7.88749 * (kx**2 + ky2) - 16.5208 * kz2]
+        [   -18.3007*(kx**2 + ky2) - 7.22796*kz2, h01],
+        [h10,     - 7.88749 * (kx**2 + ky2) - 16.5208 * kz2]
     ])
 
 
@@ -175,13 +175,13 @@ for L in L_values:
     
     plt.xlim(0, 1)
     plt.xticks([])
-    # plt.ylim(-1, 1.5)
+    plt.ylim(-1, 1)
     plt.ylabel("Energy (eV)")
     plt.title(r"Subband energies")
     plt.axhline(0, color='red', linestyle='-', alpha=0.3)
     # plt.axhline(Eg, color='red', linestyle='-', alpha=0.3)
-    # plt.text(0.1, 1.4, f"L = {L}")
-    # plt.text(0.1, 1.3, f"N = {Ny}")
+    plt.text(0.1, 0.9, f"L = {L}")
+    plt.text(0.1, 0.8, f"N = {Ny}")
     plt.tight_layout()
     plt.savefig(f"subbands_vb_vb_toy_L{L}_Ny{Ny}.png", dpi = 300)
     plt.show()
