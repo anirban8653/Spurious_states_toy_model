@@ -57,7 +57,6 @@ ax.set_ylabel('kz')
 ax.set_zlabel('Energy')
 
 ax.set_title('3D Dispersion at kx = 0')
-
 plt.show()
 
 
@@ -123,7 +122,7 @@ def H_k_only(kx, ky, kz, kykz, ky2, kz2):
 # Parameters
 #--------------------
 
-L_values = [100,300, 500, 1000, 5000, 10000]
+L_values = [100]#,300, 500, 1000, 5000, 10000]
 
 for L in L_values:
     Ny = Nz = 20 
@@ -186,7 +185,42 @@ for L in L_values:
     plt.savefig(f"subbands_vb_vb_toy_L{L}_Ny{Ny}.png", dpi = 300)
     plt.show()
 
+#%%
 
+#---------------------------------------------------------------
+# Probability distribution of the subband wave-functions
+#---------------------------------------------------------------
+
+num_states = 4  # first few subbands
+# Sort in descending order
+idx_sort = np.argsort(E)[::-1]
+
+E = E[idx_sort]
+V = V[:, idx_sort]
+
+plt.figure(figsize=(10,8))
+
+for s in range(num_states):
+    
+    psi_mn = np.zeros((Ny, Nz))
+    
+    for m in range(Ny):
+        for n in range(Nz):
+            
+            for alpha in range(nband):
+                coeff = V[idx(alpha, m, n), s]
+                psi_mn[m, n] += np.abs(coeff)**2
+    
+    # psi_mn /= np.max(psi_mn)
+    
+    plt.subplot(2, 2, s+1)
+    plt.imshow(psi_mn.T, origin='lower', aspect='auto')
+    plt.title(f"State {s}, E={E[s]:.3f}, L = {L}, N = {Ny}")
+    plt.colorbar()
+
+plt.tight_layout()
+plt.savefig("wave_functon.png", dpi = 300)
+plt.show()
 
 #%%
 #---------------------------------------------
