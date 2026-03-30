@@ -69,40 +69,40 @@ plt.show()
 def idx(alpha, m, n):
     return alpha + nband * (m + Ny * n)
 
-def ky(m, mp, L):
+def ky(m, mp, n, np_, L):
     """<m,n|ky|m',n'>"""
     m, mp = m + 1, mp + 1
-    if (m + mp) % 2 == 1:
+    if (m + mp) % 2 == 1 and n == np_:
         return (-4j / L) * (m * mp) / (m**2 - mp**2)
     return 0
 
-def kz(n, np_, L):
+def kz(m, mp, n, np_, L):
     """<m,n|kz|m',n'>"""
     n, np_ = n + 1, np_ + 1
-    if (n + np_) % 2 == 1:
+    if (n + np_) % 2 == 1 and m==mp:
         return (-4j / L) * (n * np_) / (n**2 - np_**2)
     return 0
 
-def kykz(m,n,mp,np_,L):
+def kykz(m, mp, n, np_, L):
     """<m,n|kykz|m',n'>"""
     m,mp, n, np_ = m + 1, mp + 1, n + 1, np_ + 1
     if (m + mp) % 2 == 1 and  (n + np_) % 2 == 1:
         return -16 * m * mp * n * np_/ (L**2 * (m**2 - mp**2) * (n**2 - np_**2))
     return 0
 
-def ky2(m,mp,L):
+def ky2(m, mp, n, np_, L):
     """<m,n|ky^2|m',n'>"""
     m+=1 
     mp+=1
-    if m==mp:
+    if m==mp and n==np_:
         return (m*np.pi/L)**2
     return 0
 
-def kz2(n,np_,L):
+def kz2(m, mp, n, np_, L):
     """<m,n|kz^2|m',n'>"""
     n+=1 
     np_+=1
-    if n==np_:
+    if n==np_ and m==mp:
         return (n*np.pi/L)**2
     return 0
 
@@ -122,69 +122,70 @@ def H_k_only(kx, ky, kz, kykz, ky2, kz2):
 # Parameters
 #--------------------
 
-L_values = [100]#,300, 500, 1000, 5000, 10000]
 
-for L in L_values:
-    Ny = Nz = 20 
-    nband = 2
-    Eg = 0.632 #energy gap
-    
-    dim = nband * Ny * Nz
-    H = np.zeros((dim, dim), dtype=complex)
-    
-    
-    #-----------------------------------
-    # Constructing the Hamiltonian
-    #-----------------------------------
-    
-    for m in range(Ny):
-        for n in range(Nz):
-            for mp in range(Ny):
-                for np_ in range(Nz):
-                    
-                    # 1. Calculate spatial elements
-                    ky_v = ky(m, mp, L)
-                    kz_v = kz(n, np_, L)
-                    ky2_v = ky2(m, mp, L)
-                    kz2_v = kz2(n, np_, L)
-                    kykz_v = kykz(m, n, mp, np_, L)
-                    
-                    # 2. Get ONLY the k-dependent part (No Eg here)
-                    H_k_part = H_k_only(0, ky_v, kz_v, kykz_v, ky2_v, kz2_v)
-                    
-                    # 3. Add the constants ONLY on the spatial diagonal (m=mp, n=np)
-                    if m == mp and n == np_:
-                        # Manually add the band edges
-                        H_k_part[0, 0] += 0.0  # Conduction band edge
-                        H_k_part[1, 1] += -0.3622 # Valence band edge
-                    
-                    # 4. Map to the big matrix
-                    for a in range(nband):
-                        for b in range(nband):
-                            H[idx(a, m, n), idx(b, mp, np_)] = H_k_part[a, b]
-    
-    E, V = eigh(H)
-    
-    #----------------------------
-    # Plotting the subbands
-    #----------------------------
-    plt.figure(figsize=(4, 6))
-    for energy in E:
-        plt.hlines(energy, 0, 1, linewidth=1, alpha=0.5, color='tab:blue')
-    
-    plt.xlim(0, 1)
-    plt.xticks([])
-    plt.ylim(-1, 1)
-    plt.ylabel("Energy (eV)")
-    plt.title(r"Subband energies")
-    plt.axhline(0, color='red', linestyle='-', alpha=0.3)
-    # plt.axhline(Eg, color='red', linestyle='-', alpha=0.3)
-    plt.text(0.1, 0.9, f"L = {L}")
-    plt.text(0.1, 0.8, f"N = {Ny}")
-    plt.tight_layout()
-    plt.savefig(f"subbands_vb_vb_toy_L{L}_Ny{Ny}.png", dpi = 300)
-    plt.show()
+Ny = Nz = 20 
+L = 100
+nband = 2
+Eg = 0.632 #energy gap
 
+dim = nband * Ny * Nz
+H = np.zeros((dim, dim), dtype=complex)
+
+
+#-----------------------------------
+# Constructing the Hamiltonian
+#-----------------------------------
+
+for m in range(Ny):
+    for n in range(Nz):
+        for mp in range(Ny):
+            for np_ in range(Nz):
+                
+                # 1. Calculate spatial elements
+                ky_v = ky(m, mp, n, np_, L)
+                kz_v = kz(m, mp, n, np_, L)
+                ky2_v = ky2(m, mp, n, np_, L)
+                kz2_v = kz2(m, mp, n, np_, L)
+                kykz_v = kykz(m, mp, n, np_, L)
+                
+                # 2. Get ONLY the k-dependent part (No Eg here)
+                H_k_part = H_k_only(0, ky_v, kz_v, kykz_v, ky2_v, kz2_v)
+                
+                # 3. Add the constants ONLY on the spatial diagonal (m=mp, n=np)
+                if m == mp and n == np_:
+                    # Manually add the band edges
+                    H_k_part[0, 0] += 0.0  # Conduction band edge
+                    H_k_part[1, 1] += -0.3622 # Valence band edge
+                
+                # 4. Map to the big matrix
+                for a in range(nband):
+                    for b in range(nband):
+                        H[idx(a, m, n), idx(b, mp, np_)] = H_k_part[a, b]
+
+E, V = eigh(H)
+
+#----------------------------
+# Plotting the subbands
+#----------------------------
+plt.figure(figsize=(4, 6))
+for energy in E:
+    plt.hlines(energy, 0, 1, linewidth=1, alpha=0.5, color='tab:blue')
+
+plt.xlim(0, 1)
+plt.xticks([])
+plt.ylim(-1, 1)
+plt.ylabel("Energy (eV)")
+plt.title(r"Subband energies")
+plt.axhline(0, color='red', linestyle='-', alpha=0.3)
+# plt.axhline(Eg, color='red', linestyle='-', alpha=0.3)
+plt.text(0.1, 0.9, f"L = {L}")
+plt.text(0.1, 0.8, f"N = {Ny}")
+plt.tight_layout()
+plt.savefig(f"subbands_vb_vb_toy_L{L}_Ny{Ny}.png", dpi = 300)
+plt.show()
+
+count = np.sum(E > 0)
+print("Number of eigen values > 0: ", count)
 #%%
 
 #---------------------------------------------------------------
@@ -198,6 +199,9 @@ idx_sort = np.argsort(E)[::-1]
 E = E[idx_sort]
 V = V[:, idx_sort]
 
+count = np.sum(E > 0)
+print(count)
+
 plt.figure(figsize=(10,8))
 
 for s in range(num_states):
@@ -207,7 +211,7 @@ for s in range(num_states):
     for m in range(Ny):
         for n in range(Nz):
             
-            for alpha in range(nband):
+            for alpha in range(1,nband):
                 coeff = V[idx(alpha, m, n), s]
                 psi_mn[m, n] += np.abs(coeff)**2
     
@@ -222,48 +226,48 @@ plt.tight_layout()
 plt.savefig("wave_functon.png", dpi = 300)
 plt.show()
 
-#%%
-#---------------------------------------------
-# check for spurious states at a large k value
-#---------------------------------------------
+# #%%
+# #---------------------------------------------
+# # check for spurious states at a large k value
+# #---------------------------------------------
  
-def random_unit_vector():
-    """A random normalised unit vector"""
-    v = np.random.randn(3)
-    return v / np.linalg.norm(v)
+# def random_unit_vector():
+#     """A random normalised unit vector"""
+#     v = np.random.randn(3)
+#     return v / np.linalg.norm(v)
 
 
 
-N = 500 # checks the spurious states for N number of random momenta
+# N = 500 # checks the spurious states for N number of random momenta
 
-bad_sign_count = 0
-small_gap_count = 0
+# bad_sign_count = 0
+# small_gap_count = 0
 
-tol = 1e-6
-k0 = 1e5   # very large momentum
-for i in range(N):
-    direction = random_unit_vector()
-    kx, ky, kz = k0 * direction
+# tol = 1e-6
+# k0 = 1e5   # very large momentum
+# for i in range(N):
+#     direction = random_unit_vector()
+#     kx, ky, kz = k0 * direction
     
-    evals, _ = eigh(H_simple(kx, ky, kz))
-    # print(evals)
+#     evals, _ = eigh(H_simple(kx, ky, kz))
+#     # print(evals)
     
-    # Count positive/negative
-    n_neg = np.sum(evals < -tol)
+#     # Count positive/negative
+#     n_neg = np.sum(evals < -tol)
     
         
-    # Check sign condition
-    if not n_neg == 2:
-        bad_sign_count += 1
-        print(f"[FAIL SIGN] Iter {i}: n_neg={n_neg}")
+#     # Check sign condition
+#     if not n_neg == 2:
+#         bad_sign_count += 1
+#         print(f"[FAIL SIGN] Iter {i}: n_neg={n_neg}")
     
     
-    # Debug print if something fails
-    if n_neg != 2:
-        print("Eigenvalues:", evals)
-        print("-"*50)
+#     # Debug print if something fails
+#     if n_neg != 2:
+#         print("Eigenvalues:", evals)
+#         print("-"*50)
 
-print("\n===== SUMMARY =====")
-print(f"Sign failures     : {bad_sign_count} / {N}")
-print(f"Small gap failures: {small_gap_count} / {N}")
+# print("\n===== SUMMARY =====")
+# print(f"Sign failures     : {bad_sign_count} / {N}")
+# print(f"Small gap failures: {small_gap_count} / {N}")
 
